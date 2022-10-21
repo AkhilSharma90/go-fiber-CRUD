@@ -46,6 +46,7 @@ func SetupTodosRoutes(grp fiber.Router) {
 	todosRoutes.Get("/", GetTodos)
 	todosRoutes.Post("/", CreateTodo)
 	todosRoutes.Get("/:id", GetTodo)
+	todosRoutes.Delete("/:id", DeleteTodo)
 }
 
 func GetTodos(ctx *fiber.Ctx) {
@@ -91,6 +92,27 @@ func GetTodo(ctx *fiber.Ctx) {
 	for _, todo := range todos {
 		if todo.Id == id {
 			ctx.Status(fiber.StatusOK).JSON(todo)
+			return
+		}
+	}
+
+	ctx.Status(fiber.StatusNotFound)
+}
+
+func DeleteTodo(ctx *fiber.Ctx) {
+	paramsId := ctx.Params("id")
+	id, err := strconv.Atoi(paramsId)
+	if err != nil {
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "cannot parse id",
+		})
+		return
+	}
+
+	for i, todo := range todos {
+		if todo.Id == id {
+			todos = append(todos[0:i], todos[i+1:]...)
+			ctx.Status(fiber.StatusNoContent)
 			return
 		}
 	}
