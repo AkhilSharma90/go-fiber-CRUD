@@ -42,8 +42,35 @@ func SetupApiV1(app *fiber.App) {
 func SetupTodosRoutes(grp fiber.Router) {
 	todosRoutes := grp.Group("/todos")
 	todosRoutes.Get("/", GetTodos)
+	todosRoutes.Post("/", CreateTodo)
 }
 
 func GetTodos(ctx *fiber.Ctx) {
 	ctx.Status(fiber.StatusOK).JSON(todos)
+}
+
+func CreateTodo(ctx *fiber.Ctx) {
+	type request struct {
+		Name string `json:"name"`
+	}
+
+	var body request
+
+	err := ctx.BodyParser(&body)
+	if err != nil {
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "cannot parse json",
+		})
+		return
+	}
+
+	todo := &Todo{
+		Id:        len(todos) + 1,
+		Name:      body.Name,
+		Completed: false,
+	}
+
+	todos = append(todos, todo)
+
+	ctx.Status(fiber.StatusCreated).JSON(todo)
 }
