@@ -47,6 +47,7 @@ func SetupTodosRoutes(grp fiber.Router) {
 	todosRoutes.Post("/", CreateTodo)
 	todosRoutes.Get("/:id", GetTodo)
 	todosRoutes.Delete("/:id", DeleteTodo)
+	todosRoutes.Patch("/:id", UpdateTodo)
 }
 
 func GetTodos(ctx *fiber.Ctx) {
@@ -118,4 +119,53 @@ func DeleteTodo(ctx *fiber.Ctx) {
 	}
 
 	ctx.Status(fiber.StatusNotFound)
+}
+
+func UpdateTodo(ctx *fiber.Ctx) {
+	type request struct {
+		Name      *string `json:"name"`
+		Completed *bool   `json:"completed"`
+	}
+
+	paramsId := ctx.Params("id")
+	id, err := strconv.Atoi(paramsId)
+	if err != nil {
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "cannot parse id",
+		})
+		return
+	}
+
+	var body request
+	err = ctx.BodyParser(&body)
+	if err != nil {
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "cannot parse body",
+		})
+		return
+	}
+
+	var todo *Todo
+
+	for _, t := range todos {
+		if t.Id == id {
+			todo = t
+			break
+		}
+	}
+
+	if todo == nil {
+		ctx.Status(fiber.StatusNotFound)
+		return
+	}
+
+	if body.Name != nil {
+		todo.Name = *body.Name
+	}
+
+	if body.Completed != nil {
+		todo.Completed = *body.Completed
+	}
+
+	ctx.Status(fiber.StatusOK).JSON(todo)
 }
